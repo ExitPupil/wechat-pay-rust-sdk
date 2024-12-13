@@ -52,9 +52,13 @@ pub trait PayNotifyTrait: WechatPayTrait {
         let hashed = Sha256::new().chain_update(message).finalize();
         let signature = util::base64_decode(signature.as_ref())?;
         let scheme = Pkcs1v15Sign::new::<Sha256>();
-        pub_key
-            .verify(scheme, &hashed, signature.as_slice())
-            .map_err(|e| PayError::VerifyError(e.to_string()))
+        let v_result = pub_key
+            .verify(scheme, &hashed, signature.as_slice());
+        if v_result.is_err() {
+            return Err(PayError::VerifyError("signature verify failed".to_string()));
+        } else {
+            Ok(())
+        }
     }
     fn decrypt_paydata<S>(
         &self,
